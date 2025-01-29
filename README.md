@@ -51,7 +51,7 @@ The database consists of the following tables:
 - **`Anime_Studios`** - A many-to-many join table linking anime and studios.
 - **`Anime_Relationships`** - Stores relationships between anime (prequels, adaptations, etc.).
 
-### 📌 Entity-Relationship Diagram (ERD)
+### Entity-Relationship Diagram (ERD)
 Below is a visual representation of the database schema.
 
 ![ERD](sql/erd_diagram.png)
