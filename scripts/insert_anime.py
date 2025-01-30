@@ -23,8 +23,8 @@ for anime in anime_data:
     title_romaji  = anime["title"]["romaji"]
     title_english = anime["title"]["english"]
     episodes = anime["episodes"]
-    average_score = anime["averageScore"]
-    popularity = anime["popularity"]
+    average_score = anime.get("averageScore")
+    popularity = anime.get("popularity")
     status = anime["status"]
     start_date = f"{anime['startDate']['year']}-{anime['startDate']['month']:02d}-{anime['startDate']['day']:02d}"
 
@@ -35,10 +35,10 @@ for anime in anime_data:
         """, (anime_id, title_romaji, title_english, episodes, status, start_date))
     
     cur.execute("""
-        INSERT INTO ratings (average_score, popularity)
-        VALUES (%s, %s)
-        ON CONFLICT (anime_id) DO NOTHING;
-        """, (average_score, popularity))
+        INSERT INTO ratings (anime_id, average_score, popularity)
+        VALUES (%s, %s, %s)
+        ON CONFLICT DO NOTHING;
+        """, (anime_id, average_score, popularity))
 
     for genre in anime["genres"]:
         cur.execute("""
@@ -70,8 +70,21 @@ for anime in anime_data:
             INSERT INTO Anime_Studios (anime_id, studio_id)
             VALUES (%s, %s) ON CONFLICT DO NOTHING;
             """, (anime_id, studio_id))
-    
-    
+        
+for anime in anime_data:
+    anime_id = anime["id"]
+
+    for relation in anime["relations"]["edges"]:
+        related_title = relation["node"]["title"]["romaji"]
+        cur.execute("SELECT anime_id FROM Anime WHERE title_romaji = %s;", (related_title,))
+        result = cur.fetchone()
+        related_id = result[0] if result else None
+
+        if related_id:
+            cur.execute("""
+                INSERT INTO Anime_Relationships (anime_id, related_anime_id, relation_type)
+                VALUES (%s, %s, %s) ON CONFLICT DO NOTHING;
+            """, (anime_id, related_id, relation["relationType"]))
 
 conn.commit()
 cur.close()
