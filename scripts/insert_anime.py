@@ -23,6 +23,8 @@ for anime in anime_data:
     title_romaji  = anime["title"]["romaji"]
     title_english = anime["title"]["english"]
     episodes = anime["episodes"]
+    average_score = anime["averageScore"]
+    popularity = anime["popularity"]
     status = anime["status"]
     start_date = f"{anime['startDate']['year']}-{anime['startDate']['month']:02d}-{anime['startDate']['day']:02d}"
 
@@ -31,6 +33,12 @@ for anime in anime_data:
         VALUES (%s, %s, %s, %s, %s, %s)
         ON CONFLICT (anime_id) DO NOTHING;
         """, (anime_id, title_romaji, title_english, episodes, status, start_date))
+    
+    cur.execute("""
+        INSERT INTO ratings (average_score, popularity)
+        VALUES (%s, %s)
+        ON CONFLICT (anime_id) DO NOTHING;
+        """, (average_score, popularity))
 
     for genre in anime["genres"]:
         cur.execute("""
@@ -62,6 +70,8 @@ for anime in anime_data:
             INSERT INTO Anime_Studios (anime_id, studio_id)
             VALUES (%s, %s) ON CONFLICT DO NOTHING;
             """, (anime_id, studio_id))
+    
+    
 
 conn.commit()
 cur.close()
