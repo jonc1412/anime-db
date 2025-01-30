@@ -37,7 +37,6 @@ for anime in anime_data:
             INSERT INTO Genres (genre_name)
             VALUES (%s)
             ON CONFLICT (genre_name) DO NOTHING
-            RETURNING genre_id;
             """, (genre,))
 
         cur.execute("SELECT genre_id FROM Genres WHERE genre_name = %s;", (genre,))
@@ -47,6 +46,22 @@ for anime in anime_data:
             INSERT INTO Anime_Genres (anime_id, genre_id)
             VALUES (%s, %s) ON CONFLICT DO NOTHING;
             """, (anime_id, genre_id))
+                
+    for studio in anime["studios"]["nodes"]:
+        studio = studio["name"]
+        cur.execute("""
+            INSERT INTO Studios (studio_name)
+            VALUES (%s)
+            ON CONFLICT (studio_name) DO NOTHING
+            """, (studio,))
+        
+        cur.execute("SELECT studio_id FROM Studios WHERE studio_name = %s;", (studio,))
+        studio_id = cur.fetchone()[0]
+
+        cur.execute("""
+            INSERT INTO Anime_Studios (anime_id, studio_id)
+            VALUES (%s, %s) ON CONFLICT DO NOTHING;
+            """, (anime_id, studio_id))
 
 conn.commit()
 cur.close()
