@@ -46,3 +46,27 @@ JOIN studios s ON as2.studio_id = s.studio_id
 GROUP BY s.studio_name
 ORDER BY "average score" DESC
 LIMIT 10;
+
+-- Animes with at least 10 Studios
+SELECT a.title_romaji , COUNT(s.studio_name) AS number_of_studios
+FROM anime a 
+JOIN anime_studios as2 ON a.anime_id = as2.anime_id 
+JOIN studios s ON as2.studio_id = s.studio_id 
+GROUP BY a.title_romaji 
+HAVING COUNT(s.studio_name) >= 10
+ORDER BY number_of_studios DESC;
+
+-- Highest Rated Anime for each Decade
+WITH DecadeRank AS (
+	SELECT 
+		a.anime_id,
+		a.title_romaji,
+		FLOOR(EXTRACT(YEAR FROM a.start_date) / 10) * 10 AS decade,
+		RANK() OVER (PARTITION BY FLOOR(EXTRACT(YEAR FROM a.start_date) / 10) * 10 ORDER BY r.average_score DESC) AS rank
+	FROM anime a
+	JOIN ratings r USING (anime_id)
+)
+SELECT decade, title_romaji
+FROM DecadeRank 
+WHERE rank = 1
+ORDER BY decade ASC;
