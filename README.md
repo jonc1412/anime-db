@@ -1,6 +1,6 @@
 # Anime Database
 
-This project stores and analyzes anime data using **Postgres** and **Python** ('psycopg2'). Data is fetched from the **AniList API** and structured into a relational database.
+This project stores and analyzes anime data using **Postgres** and **Python** utilizing the `psycopg2` library. Data is fetched from the **AniList API** and structured into a relational database.
 
 ### Features
 - Fetches anime data from **AniList API**
