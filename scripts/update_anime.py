@@ -14,7 +14,34 @@ DB_PASSWORD = os.getenv("PG_PASSWORD")
 DB_HOST = os.getenv("PG_HOST")
 DB_PORT = os.getenv("PG_PORT")
 
-# Step 1: Check if any of the 'RELEASING' animes are updated (status, episodes)
+conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASSWORD, host=DB_HOST, port=DB_PORT)
+
+# Step 1: Delete anime in the database that are not in the API call
+def delete_outdated(conn, api_data):
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT anime_id
+        FROM anime
+    """)
+    db_anime = [row for row in cur.fetchall()]
+
+    print(db_anime)
+
+    outdated_anime = []
+    for anime in api_data:
+        anime_id = anime['id']
+
+        if anime_id not in db_anime:
+            outdated_anime.append(anime_id)
+    
+    for anime_id in outdated_anime:
+        cur.execute(""""
+            DELETE FROM anime
+            WHERE anime_id = %s
+        """, (anime_id))
+
+# Step 2: Check if any of the 'RELEASING' animes are updated (status, episodes)
 def check_ongoing(conn, api_data):
     cur = conn.cursor()
 
