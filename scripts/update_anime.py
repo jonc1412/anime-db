@@ -35,11 +35,19 @@ def delete_outdated(conn, api_data):
         if anime_id not in db_anime:
             outdated_anime.append(anime_id)
     
-    for anime_id in outdated_anime:
-        cur.execute(""""
+    if outdated_anime:
+        cur.executemany(""""
             DELETE FROM anime
             WHERE anime_id = %s
         """, (anime_id))
+
+        conn.commit()
+
+        print('Successfully deleted outdated anime from the database')
+    else:
+        print('No changes were made')
+
+    cur.close()
 
 # Step 2: Check if any of the 'RELEASING' animes are updated (status, episodes)
 def check_ongoing(conn, api_data):
@@ -81,3 +89,31 @@ def check_ongoing(conn, api_data):
         print('No changes were made')
 
     cur.close()
+
+# Step 3: Update the average_score and popularity of all anime
+def update_rating(conn, api_data):
+    cur = conn.cursor()
+
+    updates = []
+    for anime in api_data:
+        anime_id = anime['id']
+        popularity = anime['popularity']
+        average_score = anime['averageScore']
+
+        updates.append((anime_id, average_score, popularity))
+    
+    if updates:
+        cur.executemany("""
+            UPDATE Ratings
+            SET average_score = %s, popularity = %s
+            WHERE anime_id = %s
+        """, updates)
+
+        conn.commit()
+        print('Successfully updated anime popularity and average_score')
+    else:
+        print('No changes were made')
+    
+    cur.close()
+
+update_rating(conn, api_data)
