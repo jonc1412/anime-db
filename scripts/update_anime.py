@@ -1,21 +1,3 @@
-import psycopg2
-import json
-import os
-from dotenv import load_dotenv
-
-load_dotenv()
-
-with open("data/anime_data.json", "r", encoding="utf-8") as f:
-    api_data = json.load(f)
-
-DB_NAME = os.getenv("PG_DB")
-DB_USER = os.getenv("PG_USER")
-DB_PASSWORD = os.getenv("PG_PASSWORD")
-DB_HOST = os.getenv("PG_HOST")
-DB_PORT = os.getenv("PG_PORT")
-
-conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASSWORD, host=DB_HOST, port=DB_PORT)
-
 # Step 1: Delete anime in the database that are not in the API call
 def delete_outdated(conn, api_data):
     cur = conn.cursor()
@@ -24,26 +6,20 @@ def delete_outdated(conn, api_data):
         SELECT anime_id
         FROM anime
     """)
-    db_anime = [row for row in cur.fetchall()]
+    db_anime_ids = [row[0] for row in cur.fetchall()]
+    api_anime_ids = [anime['id'] for anime in api_data]
 
-    print(db_anime)
-
-    outdated_anime = []
-    for anime in api_data:
-        anime_id = anime['id']
-
-        if anime_id not in db_anime:
-            outdated_anime.append(anime_id)
+    outdated_anime = [anime_id for anime_id in db_anime_ids if anime_id not in api_anime_ids]
     
     if outdated_anime:
-        cur.executemany(""""
+        cur.executemany("""
             DELETE FROM anime
             WHERE anime_id = %s
-        """, (anime_id))
+        """, [(id,) for id in outdated_anime])
 
         conn.commit()
 
-        print('Successfully deleted outdated anime from the database')
+        print(f'Successfully deleted {len(outdated_anime)} outdated anime from the database')
     else:
         print('No changes were made')
 
@@ -56,6 +32,7 @@ def check_ongoing(conn, api_data):
     cur.execute("""
         SELECT anime_id, episodes, status
         FROM anime
+        WHERE status = 'RELEASING'
     """)
     ongoing_anime = {row[0]: {
         'episodes': row[1],
@@ -100,7 +77,7 @@ def update_rating(conn, api_data):
         popularity = anime['popularity']
         average_score = anime['averageScore']
 
-        updates.append((anime_id, average_score, popularity))
+        updates.append((average_score, popularity, anime_id))
     
     if updates:
         cur.executemany("""
@@ -115,5 +92,3 @@ def update_rating(conn, api_data):
         print('No changes were made')
     
     cur.close()
-
-update_rating(conn, api_data)
