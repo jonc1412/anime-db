@@ -57,5 +57,3 @@ def fetch_anime_data(total_anime, per_page=50):
 
     with open("data/anime_data.json", "w", encoding="utf-8") as f:
         json.dump(anime, f, indent=4, ensure_ascii=False)
-    
-fetch_anime_data(500)
