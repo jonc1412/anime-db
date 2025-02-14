@@ -1,21 +1,3 @@
-import psycopg2
-import json
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
-
-with open("data/anime_data.json", "r", encoding="utf-8") as f:
-    anime_data = json.load(f)
-
-DB_NAME = os.getenv("PG_DB")
-DB_USER = os.getenv("PG_USER")
-DB_PASSWORD = os.getenv("PG_PASSWORD")
-DB_HOST = os.getenv("PG_HOST")
-DB_PORT = os.getenv("PG_PORT")
-
-conn = psycopg2.connect(dbname=DB_NAME, user=DB_USER, password=DB_PASSWORD, host=DB_HOST, port=DB_PORT)
-
 # Checks for currently existsing data within the database. Adds anime from the API that is not found within the database
 def add_anime(conn, api_data):
     cur = conn.cursor()
@@ -27,7 +9,7 @@ def add_anime(conn, api_data):
     existing_anime_id = {row[0] for row in cur.fetchall()}
 
     # Loops through the API data and adds value into the corresponding tables in the database
-    for anime in anime_data:
+    for anime in api_data:
         anime_id = anime["id"]
 
         if anime_id not in existing_anime_id:
@@ -85,7 +67,7 @@ def add_anime(conn, api_data):
                     """, (anime_id, studio_id))
     
     # Separate function that finds the related anime_id from the API and then stores the related_anime_id
-    for anime in anime_data:
+    for anime in api_data:
         anime_id = anime["id"]
 
         if anime_id not in existing_anime_id:
